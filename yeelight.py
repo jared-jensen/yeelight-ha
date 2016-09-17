@@ -5,7 +5,7 @@ Support for Yeelight lights.
 from homeassistant.components.light import (ATTR_BRIGHTNESS,ATTR_TRANSITION,SUPPORT_TRANSITION,SUPPORT_BRIGHTNESS,Light)
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['https://github.com/mxtra/pyyeelight/zipball/master#pyyeelight==1.0']
+REQUIREMENTS = ['https://github.com/mxtra/pyyeelight/archive/v1.1.zip#pyyeelight==1.1']
 
 ATTR_NAME = 'name'
 
