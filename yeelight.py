@@ -2,14 +2,14 @@
 Support for Yeelight lights.
 """
 
-from homeassistant.components.light import (ATTR_BRIGHTNESS,ATTR_TRANSITION,SUPPORT_TRANSITION,SUPPORT_BRIGHTNESS,Light)
+from homeassistant.components.light import (ATTR_BRIGHTNESS,ATTR_TRANSITION, SUPPORT_TRANSITION, SUPPORT_BRIGHTNESS, Light, ATTR_RGB_COLOR, SUPPORT_COLOR_TEMP, SUPPORT_RGB_COLOR)
 import homeassistant.helpers.config_validation as cv
 
 REQUIREMENTS = ['https://github.com/mxtra/pyyeelight/archive/v1.2.zip#pyyeelight==1.2']
 
 ATTR_NAME = 'name'
 
-SUPPORT_YEELIGHT_LED = (SUPPORT_BRIGHTNESS | SUPPORT_TRANSITION)
+SUPPORT_YEELIGHT_LED = (SUPPORT_BRIGHTNESS | SUPPORT_TRANSITION | SUPPORT_RGB_COLOR | SUPPORT_COLOR_TEMP)
 
 
 def setup_platform(hass, config, add_devices_callback, discovery_info=None):
@@ -72,6 +72,17 @@ class Yeelight(Light):
     def supported_features(self):
         """Return supported features."""
         return SUPPORT_YEELIGHT_LED
+		
+    @property
+    def rgb_color(self):
+       """Return color of this bulb."""
+       return self.bulb.rgb
+	
+    @property
+    def supported_features(self):
+        """Flag supported features."""
+        return SUPPORT_YEELIGHT_RGB
+
 
     def turn_on(self, **kwargs):
         """Turn the bulb on"""
@@ -84,9 +95,14 @@ class Yeelight(Light):
             transtime = kwargs[ATTR_TRANSITION] * 1000
             
         if ATTR_BRIGHTNESS in kwargs:
-            self.bulb.setBrightness(kwargs[ATTR_BRIGHTNESS],transtime)
-
-
+            self.bulb.setBrightness(kwargs[ATTR_BRIGHTNESS], transtime)
+		
+        if ATTR_COLOR_TEMP in kwargs:
+            self.bulb.setColorTemp(kwargs[ATTR_COLOR_TEMP], transtime)
+		
+        if ATTR_RGB_COLOR in kwargs:
+            self.bulb.setRgb(kwargs[ATTR_RGB_COLOR],transtime)
+			
     def turn_off(self, **kwargs):
         """Turn the bulb off."""
         self.bulb.turnOff()
