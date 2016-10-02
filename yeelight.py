@@ -1,15 +1,29 @@
 """
 Support for Yeelight lights.
 """
+import socket
+import voluptuous as vol
 
-from homeassistant.components.light import (ATTR_BRIGHTNESS,ATTR_TRANSITION, SUPPORT_TRANSITION, SUPPORT_BRIGHTNESS, Light, ATTR_RGB_COLOR, SUPPORT_COLOR_TEMP, SUPPORT_RGB_COLOR)
+from homeassistant.components.light import (ATTR_COLOR_TEMP, ATTR_BRIGHTNESS,ATTR_TRANSITION,SUPPORT_TRANSITION,SUPPORT_BRIGHTNESS,Light, SUPPORT_COLOR_TEMP, SUPPORT_RGB_COLOR, ATTR_RGB_COLOR)
 import homeassistant.helpers.config_validation as cv
 
-REQUIREMENTS = ['https://github.com/mxtra/pyyeelight/archive/v1.2.zip#pyyeelight==1.2']
+
+REQUIREMENTS = ['https://github.com/mxtra/pyyeelight/archive/v1.5.zip#pyyeelight==1.5']
 
 ATTR_NAME = 'name'
+DOMAIN = "yeelight"
 
-SUPPORT_YEELIGHT_LED = (SUPPORT_BRIGHTNESS | SUPPORT_TRANSITION | SUPPORT_RGB_COLOR | SUPPORT_COLOR_TEMP)
+DEVICE_SCHEMA = vol.Schema({
+    vol.Optional(ATTR_NAME): cv.string,
+})
+
+PLATFORM_SCHEMA = vol.Schema({
+    vol.Required('platform'): DOMAIN,
+    vol.Optional('devices', default={}): {cv.string: DEVICE_SCHEMA},
+    vol.Optional('automatic_add', default=False):  cv.boolean,
+}, extra=vol.ALLOW_EXTRA)
+
+SUPPORT_YEELIGHT_LED = (SUPPORT_BRIGHTNESS | SUPPORT_TRANSITION |  SUPPORT_COLOR_TEMP | SUPPORT_RGB_COLOR)
 
 
 def setup_platform(hass, config, add_devices_callback, discovery_info=None):
@@ -27,7 +41,7 @@ def setup_platform(hass, config, add_devices_callback, discovery_info=None):
     if not config['automatic_add']:
         add_devices_callback(ylights)
         return
-      
+
     add_devices_callback(ylights)
 
 
@@ -72,41 +86,34 @@ class Yeelight(Light):
     def supported_features(self):
         """Return supported features."""
         return SUPPORT_YEELIGHT_LED
-		
-    @property
-    def rgb_color(self):
-       """Return color of this bulb."""
-       return self.bulb.rgb
-	
-    @property
-    def supported_features(self):
-        """Flag supported features."""
-        return SUPPORT_YEELIGHT_RGB
-
 
     def turn_on(self, **kwargs):
         """Turn the bulb on"""
         if not self.is_on:
             self.bulb.turnOn()
-        
+
         transtime = 0
-        
+
         if ATTR_TRANSITION in kwargs:
             transtime = kwargs[ATTR_TRANSITION] * 1000
-            
-        if ATTR_BRIGHTNESS in kwargs:
-            self.bulb.setBrightness(kwargs[ATTR_BRIGHTNESS], transtime)
-		
-        if ATTR_COLOR_TEMP in kwargs:
-            self.bulb.setColorTemp(kwargs[ATTR_COLOR_TEMP], transtime)
-		
+
         if ATTR_RGB_COLOR in kwargs:
-            self.bulb.setRgb(kwargs[ATTR_RGB_COLOR],transtime)
-			
+            self.bulb.setRgb(kwargs[ATTR_RGB_COLOR], transtime)
+        elif ATTR_COLOR_TEMP in kwargs:
+            self.bulb.setColorTemp(kwargs[ATTR_COLOR_TEMP],transtime)
+
+        if ATTR_BRIGHTNESS in kwargs:
+            self.bulb.setBrightness(kwargs[ATTR_BRIGHTNESS],transtime)
+
+
     def turn_off(self, **kwargs):
         """Turn the bulb off."""
         self.bulb.turnOff()
 
-    def update(self):
-        """Update state."""
-        self.bulb.refreshState()
+    @property
+    def color_temp(self):
+          return self.bulb.ct
+
+    @property
+    def rgb_color(self):
+          return self.bulb.rgb
