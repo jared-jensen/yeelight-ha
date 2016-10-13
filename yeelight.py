@@ -4,7 +4,6 @@ Support for Yeelight lights.
 import socket
 import voluptuous as vol
 import logging
-from urllib.parse import urlparse
 from homeassistant.components.light import (ATTR_COLOR_TEMP, ATTR_BRIGHTNESS,ATTR_TRANSITION,SUPPORT_TRANSITION,SUPPORT_BRIGHTNESS,Light, SUPPORT_COLOR_TEMP, SUPPORT_RGB_COLOR, ATTR_RGB_COLOR)
 import homeassistant.helpers.config_validation as cv
 
