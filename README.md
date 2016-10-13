@@ -9,7 +9,6 @@ To add your lights, just add them to your configuration.yaml:
 ```
 light:
    platform: yeelight
-   automatic_add: False
    transition: 500 #(optional: milliseconds to transition to new color/temp, range: 30-180000)
    devices:
      IP_ADR1:
