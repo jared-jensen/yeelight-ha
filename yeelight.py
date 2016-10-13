@@ -3,44 +3,62 @@ Support for Yeelight lights.
 """
 import socket
 import voluptuous as vol
-
+import logging
+from urllib.parse import urlparse
 from homeassistant.components.light import (ATTR_COLOR_TEMP, ATTR_BRIGHTNESS,ATTR_TRANSITION,SUPPORT_TRANSITION,SUPPORT_BRIGHTNESS,Light, SUPPORT_COLOR_TEMP, SUPPORT_RGB_COLOR, ATTR_RGB_COLOR)
 import homeassistant.helpers.config_validation as cv
 
+# Map ip to request id for configuring
+_CONFIGURING = {}
+_LOGGER = logging.getLogger(__name__)
 
 REQUIREMENTS = ['https://github.com/mxtra/pyyeelight/archive/v1.5.zip#pyyeelight==1.5']
 
 ATTR_NAME = 'name'
 DOMAIN = "yeelight"
+DEFAULT_TRANSITION_TIME = 350
 
 DEVICE_SCHEMA = vol.Schema({
     vol.Optional(ATTR_NAME): cv.string,
+    vol.Optional('transition', default=350):  vol.Range(min=30, max=180000),
 })
 
 PLATFORM_SCHEMA = vol.Schema({
     vol.Required('platform'): DOMAIN,
     vol.Optional('devices', default={}): {cv.string: DEVICE_SCHEMA},
-    vol.Optional('automatic_add', default=False):  cv.boolean,
+    vol.Optional('transition', default=350):  cv.positive_int,
 }, extra=vol.ALLOW_EXTRA)
 
 SUPPORT_YEELIGHT_LED = (SUPPORT_BRIGHTNESS | SUPPORT_TRANSITION |  SUPPORT_COLOR_TEMP | SUPPORT_RGB_COLOR)
-
 
 def setup_platform(hass, config, add_devices_callback, discovery_info=None):
     """Setup the Yeelight lights."""
     ylights = []
     ylight_ips = []
-    for ipaddr, device_config in config["devices"].items():
+
+    if discovery_info is not None:
+        ipaddr = discovery_info.split(":")[0]
         device = {}
-        device['name'] = device_config[ATTR_NAME]
         device['ipaddr'] = ipaddr
+        device['name'] = socket.gethostbyaddr(ipaddr)[0]
+        device['transition'] = DEFAULT_TRANSITION_TIME
         ylight = Yeelight(device)
         if ylight.is_valid:
             ylights.append(ylight)
-            ylight_ips.append(ipaddr)
-    if not config['automatic_add']:
-        add_devices_callback(ylights)
-        return
+            ylight_ips.append(ipaddr)    
+    else:
+        for ipaddr, device_config in config["devices"].items():
+            device = {}
+            device['name'] = device_config[ATTR_NAME]
+            device['ipaddr'] = ipaddr
+            if 'transition' in device_config:
+                device['transition'] = device_config['transition']
+            else: 
+                device['transition'] = config['transition']
+            ylight = Yeelight(device)
+            if ylight.is_valid:
+                ylights.append(ylight)
+                ylight_ips.append(ipaddr)
 
     add_devices_callback(ylights)
 
@@ -55,6 +73,7 @@ class Yeelight(Light):
 
         self._name = device['name']
         self._ipaddr = device['ipaddr']
+        self._transition = device['transition']
         self.is_valid = True
         self.bulb = None
         try:
@@ -71,6 +90,10 @@ class Yeelight(Light):
     @property
     def name(self):
         return self._name
+    
+    @property
+    def transition(self):
+        return self._transition
 
     @property
     def is_on(self):
@@ -95,7 +118,9 @@ class Yeelight(Light):
         transtime = 0
 
         if ATTR_TRANSITION in kwargs:
-            transtime = kwargs[ATTR_TRANSITION] * 1000
+            transtime = kwargs[ATTR_TRANSITION]
+        elif self.transition:
+            transtime = self.transition
 
         if ATTR_RGB_COLOR in kwargs:
             self.bulb.setRgb(kwargs[ATTR_RGB_COLOR], transtime)
