@@ -25,7 +25,7 @@ DEVICE_SCHEMA = vol.Schema({
 PLATFORM_SCHEMA = vol.Schema({
     vol.Required('platform'): DOMAIN,
     vol.Optional('devices', default={}): {cv.string: DEVICE_SCHEMA},
-    vol.Optional('transition', default=350):  cv.positive_int,
+    vol.Optional('transition', default=350):  vol.Range(min=30, max=180000),
 }, extra=vol.ALLOW_EXTRA)
 
 SUPPORT_YEELIGHT_LED = (SUPPORT_BRIGHTNESS | SUPPORT_TRANSITION |  SUPPORT_COLOR_TEMP | SUPPORT_RGB_COLOR)
