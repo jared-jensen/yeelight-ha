@@ -19,6 +19,7 @@ light:
         name: NAME2
 ```
 
-Transitions (in order of precedence): automation/scene/etc > devices > light component
+Transitions (in order of precedence): automation/scene/etc > devices > light component.
+
 So in the above configuration example, NAME2/IP_ADR2 will have a transition time of 500ms, while NAME1 will have a transition time of 350ms.
 
